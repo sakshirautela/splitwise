@@ -1,15 +1,10 @@
 package com.Splitwisely.backend.controller;
 
-import com.Splitwisely.backend.dto.BalanceUpdateDTO;
-import com.Splitwisely.backend.dto.GroupRequestDTO;
-import com.Splitwisely.backend.dto.GroupResponseDTO;
+import com.Splitwisely.backend.dto.GroupDTO.*;
 import com.Splitwisely.backend.service.GroupService;
 import lombok.RequiredArgsConstructor;
-import com.Splitwise.backend.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/groups")
@@ -17,56 +12,76 @@ import java.util.List;
 public class GroupController {
 
     private final GroupService groupService;
-    private final UserService userService; // Use the correct class name
 
-    // ------------------------ GET ALL GROUPS FOR USER ------------------------
-    // Mapped to GET /api/groups/user/{userId} for clarity
+    // CREATE GROUP
+    @PostMapping
+    public ResponseEntity<GroupResponseDTO> createGroup(@RequestBody CreateGroupRequest request) {
+        return ResponseEntity.ok(groupService.createGroup(request));
+    }
+
+    // GET GROUP BY ID
+    @GetMapping("/{groupId}")
+    public ResponseEntity<GroupResponseDTO> getGroupById(@PathVariable String groupId) {
+        return ResponseEntity.ok(groupService.getGroupById(groupId));
+    }
+
+    // GET ALL GROUPS OF A USER
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<GroupResponseDTO>> getAllUserGroups(@PathVariable String userId) {
-        return ResponseEntity.ok(groupService.getAllUserGroups(userId));
+    public ResponseEntity<?> getGroupsOfUser(@PathVariable String userId) {
+        return ResponseEntity.ok(groupService.getGroupsOfUser(userId));
     }
 
-    // ------------------------ CREATE GROUP ------------------------
-    @PostMapping("/create/{userId}")
-    public ResponseEntity<String> createGroup(@RequestBody GroupRequestDTO dto, @PathVariable String userId) {
-        String groupId = groupService.createNewGroup(dto, userId);
-        return ResponseEntity.ok(groupId);
+    // EDIT GROUP NAME
+    @PutMapping("/{groupId}")
+    public ResponseEntity<GroupResponseDTO> editGroup(
+            @PathVariable String groupId,
+            @RequestBody EditGroupRequest request
+    ) {
+        return ResponseEntity.ok(groupService.editGroup(groupId, request));
     }
 
-    // ------------------------ DELETE GROUP ------------------------
-    @DeleteMapping("/{groupId}/{userId}")
-    public ResponseEntity<Boolean> deleteGroup(@PathVariable String groupId, @PathVariable String userId) {
-        Boolean deleted = groupService.deleteGroupPerm(groupId, userId);
-        return ResponseEntity.ok(deleted);
+    // DELETE GROUP
+    @DeleteMapping("/{groupId}")
+    public ResponseEntity<?> deleteGroup(@PathVariable String groupId) {
+        boolean b=groupService.deleteGroup(groupId);
+        if(b){
+        return ResponseEntity.ok("Group Deleted Successfully");
+
+        }else{
+            return ResponseEntity.unprocessableEntity().build();
+        }
     }
 
-    // ------------------------ ADD USER TO GROUP ------------------------
-    @PostMapping("/{groupId}/users/{userId}")
-    public ResponseEntity<String> addUserToGroup(
+    // ADD MEMBER
+    @PostMapping("/{groupId}/members/{userId}")
+    public ResponseEntity<GroupResponseDTO> addMember(
             @PathVariable String groupId,
             @PathVariable String userId
     ) {
-        String response = groupService.addUserToGroup(groupId, userId);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(groupService.addMember(groupId, userId));
     }
 
-    // ------------------------ REMOVE USER FROM GROUP ------------------------
-    @DeleteMapping("/{groupId}/users/{userId}")
-    public ResponseEntity<String> removeUserFromGroup(
+    // REMOVE MEMBER
+    @DeleteMapping("/{groupId}/members/{userId}")
+    public ResponseEntity<GroupResponseDTO> removeMember(
             @PathVariable String groupId,
             @PathVariable String userId
     ) {
-        String response = groupService.removeUserFromGroup(groupId, userId);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(groupService.removeMember(groupId, userId));
     }
 
-    // ------------------------ UPDATE BALANCES ------------------------
-    @PostMapping("/{groupId}/balances")
-    public ResponseEntity<Boolean> groupSettlement(
+    // (OPTIONAL) ADD EXPENSE
+    @PostMapping("/{groupId}/expenses")
+    public ResponseEntity<GroupResponseDTO> addExpense(
             @PathVariable String groupId,
-            @RequestBody List<BalanceUpdateDTO> updates
+            @RequestBody AddExpenseRequest request
     ) {
-        boolean success = groupService.groupSettlement(groupId, updates);
-        return success ? ResponseEntity.ok(true) : ResponseEntity.badRequest().body(false);
+        return ResponseEntity.ok(groupService.addExpense(groupId, request));
+    }
+
+    // (OPTIONAL) GET GROUP BALANCES
+    @GetMapping("/{groupId}/balances")
+    public ResponseEntity<?> getGroupBalances(@PathVariable String groupId) {
+        return ResponseEntity.ok(groupService.calculateBalances(groupId));
     }
 }

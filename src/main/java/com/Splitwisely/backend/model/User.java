@@ -2,6 +2,7 @@ package com.Splitwisely.backend.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,26 +13,35 @@ import java.util.List;
 @AllArgsConstructor
 @Getter
 @Setter
+@Table(name = "app_user")
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    private String username;
-    private String email;
-    private String password;
-    @ManyToMany(mappedBy = "members")
-    private List<Group> groups = new ArrayList<>();
-    Object verificationToken;
-    boolean verified = false;
-    double balance = 0;
+    private String name;
 
-    public Object getVerficationToken() {
-        return verificationToken;
+    @Column(unique = true, nullable = false)
+    private String email;
+
+    private String password;
+
+    @ManyToMany(mappedBy = "members")
+    @JsonIgnore   // prevents infinite recursion when returning JSON
+    private List<Group> groups = new ArrayList<>();
+
+    private String verificationToken;
+
+    private boolean verified = false;
+
+    private double balance = 0.0;
+
+    public void setVerficationToken(String token) {
+        this.verificationToken = token;
     }
 
-    public void setVerficationToken(Object o) {
-        this.verificationToken = o;
+    public String getVerficationToken() {
+        return this.verificationToken;
     }
 }
