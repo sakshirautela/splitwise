@@ -1,9 +1,7 @@
 package com.Splitwisely.backend.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -13,6 +11,8 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
 public class Expense {
 
     @Id
@@ -20,15 +20,17 @@ public class Expense {
     private String id;
 
     private String description;
-    private double amount;
+    private double totalExpenses;
 
     private String paidBy; // userId
 
     @ElementCollection
-    private List<Split> splitBetween = new ArrayList<>();
+    private List<User> splitBetween = new ArrayList<>();
 
     @ManyToOne
     private Group group;
-    @Column(columnDefinition = "DATETIME DEFAULT GETDATE()")
+
+    @Column(nullable = false, updatable = false)
+    @org.hibernate.annotations.CreationTimestamp
     private LocalDateTime createdAt;
 }

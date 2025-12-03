@@ -1,46 +1,60 @@
-package com.Splitwise.backend.service;
+package com.Splitwisely.backend.service;
 
-import com.Splitwisely.backend.dto.BalanceUpdateDTO; // Still here, but unused in provided methods
-import com.Splitwisely.backend.dto.UserRequestDTO;
-import com.Splitwisely.backend.dto.UserResponseDTO;
 import com.Splitwisely.backend.model.User;
 import com.Splitwisely.backend.repository.UserRepository;
-import lombok.AllArgsConstructor;
+import org.jspecify.annotations.Nullable;
+import com.Splitwisely.backend.dto.UserDTO.UserResponseDTO;
+import com.Splitwisely.backend.dto.UserDTO.UserRequestDTO;
+import com.Splitwisely.backend.dto.UserDTO.CreateUserRequest;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
-
 @Service
-@AllArgsConstructor
 public class UserService {
 
-    private final UserRepository userRepository;
-    private final ModelMapper modelMapper;
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private ModelMapper modelMapper;
 
     public UserResponseDTO getUser(String id) {
-        Optional<User> userOptional = userRepository.findById(id);
-        return userOptional.map(user -> modelMapper.map(user, UserResponseDTO.class))
-                .orElse(null);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return modelMapper.map(user, UserResponseDTO.class);
     }
 
-    public void deleteUser(String id) {
+    public UserResponseDTO createUser(CreateUserRequest request) {
+        User user = new User();
+        user.setName(request.getName());
+        user.setEmail(request.getEmail());
+
+        User saved = userRepository.save(user);
+        return modelMapper.map(saved, UserResponseDTO.class);
+    }
+
+    public Boolean isExist(String mail) {
+        return userRepository.findByEmail(mail) != null;
+    }
+
+    public Boolean deleteUser(String id) {
+        if (!userRepository.existsById(id)) return false;
+
         userRepository.deleteById(id);
+        return true;
     }
 
-    public Boolean editUser(String id, UserRequestDTO userDetails) {
-        Optional<User> userOptional = userRepository.findById(id);
+    public Boolean editUser(String id, UserRequestDTO dto) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            user.setUsername(userDetails.getUsername());
-            user.setEmail(userDetails.getEmail());
-            userRepository.save(user);
-            return true;
-        }
-        return false;
+        user.setName(dto.getName());
+        user.setEmail(dto.getEmail());
+
+        userRepository.save(user);
+        return true;
     }
-
 }
