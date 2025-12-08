@@ -1,0 +1,35 @@
+services:
+  server:
+    build:
+      context: .
+    ports:
+      - 8080:8080
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Spring Boot DB variables
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/splitwise
+      - SPRING_DATASOURCE_USERNAME=splitwise
+      - SPRING_DATASOURCE_PASSWORD=splitwise
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+
+  db:
+    image: postgres:18
+    restart: always
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=splitwise
+      - POSTGRES_USER=splitwise
+      - POSTGRES_PASSWORD=splitwise
+    ports:
+      - 5433:5432
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "splitwise"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db-data:
