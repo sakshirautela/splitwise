@@ -9,7 +9,6 @@ public class GroupDTO {
     @Data
     public static class CreateGroupRequest {
         private String name;
-//        private String userid;
         private List<String> memberIds;
     }
 
